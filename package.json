@@ -4,10 +4,17 @@
   "private": true,
   "dependencies": {
     "axios": "^1.6.8",
+
     "firebase": "^10.12.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-scripts": "^3.0.1"
+
+    "firebase": "^10.11.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1"
+>>>>>>> ed6d0578bba3aaa43f2c31ff5cc3be7165ad0bb3
   },
   "scripts": {
     "start": "react-scripts start",
