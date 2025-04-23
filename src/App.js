@@ -37,6 +37,13 @@ function App() {
     const [devotionalError, setDevotionalError] = useState(null);
 
     useEffect(() => {
+        // Mock the file list for testing on Amplify
+        setFiles([
+            { id: 1, name: 'sermon1.mp3' },
+            { id: 2, name: 'sermon2.mp3' }
+        ]);
+        setError(null);
+        /*
         axios.get('http://192.168.1.21:5000/files')
             .then(response => {
                 setFiles(response.data);
@@ -46,13 +53,20 @@ function App() {
                 console.error('Error fetching files:', error);
                 setError('Failed to load files. Please try again later.');
             });
+        */
     }, []);
 
     const handleConvertSermon = async () => {
         try {
+            // Mock the conversion for testing
+            const convertedSermon = sermonText.toUpperCase();
+            setConvertedSermon(convertedSermon);
+            setSermonError(null);
+            /*
             const response = await axios.post('http://192.168.1.21:5000/convert-sermon', { sermonText });
             setConvertedSermon(response.data.convertedSermon);
             setSermonError(null);
+            */
         } catch (error) {
             console.error('Error converting sermon:', error);
             setSermonError('Failed to convert sermon. Please try again.');
@@ -76,11 +90,22 @@ function App() {
     const handleGenerateEbook = async () => {
         if (!convertedSermon) return;
         try {
+            // Mock eBook generation for testing
+            const doc = new window.jspdf.jsPDF();
+            doc.setFontSize(12);
+            doc.text(convertedSermon, 20, 20, { maxWidth: 170 });
+            const pdfBase64 = doc.output('datauristring').split(',')[1];
+            const link = document.createElement('a');
+            link.href = `data:application/pdf;base64,${pdfBase64}`;
+            link.download = 'sermon-ebook.pdf';
+            link.click();
+            /*
             const response = await axios.post('http://192.168.1.21:5000/generate-ebook', { content: convertedSermon });
             const link = document.createElement('a');
             link.href = `data:application/pdf;base64,${response.data.pdfBase64}`;
             link.download = 'sermon-ebook.pdf';
             link.click();
+            */
         } catch (error) {
             console.error('Error generating eBook:', error);
         }
@@ -89,9 +114,19 @@ function App() {
     const handleGenerateDevotional = async () => {
         if (!convertedSermon) return;
         try {
+            // Mock devotional generation for testing
+            const devotional = {
+                title: 'Daily Devotional',
+                reflection: `Reflect on this message: "${convertedSermon}"`,
+                prayer: 'Lord, guide me today. Amen.'
+            };
+            setDevotional(devotional);
+            setDevotionalError(null);
+            /*
             const response = await axios.post('http://192.168.1.21:5000/generate-devotional', { content: convertedSermon });
             setDevotional(response.data.devotional);
             setDevotionalError(null);
+            */
         } catch (error) {
             console.error('Error generating devotional:', error);
             setDevotionalError('Failed to generate devotional. Please try again.');
