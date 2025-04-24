@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pastor’s Sermon App</title>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .container { max-width: 800px; margin: auto; }
+    .upload-section, .content-section { margin-bottom: 20px; }
+    button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background-color: #0056b3; }
+    #output { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pastor’s Sermon App</h1>
+
+    <!-- Sermon Upload Section -->
+    <div class="upload-section">
+      <h2>Upload Sermon</h2>
+      <input type="file" id="sermonFile" accept=".txt,.mp3,.mp4">
+      <input type="text" id="sermonTopic" placeholder="Enter sermon topic (optional)">
+      <button onclick="uploadSermon()">Upload</button>
+    </div>
+
+    <!-- Content Generation Section -->
+    <div class="content-section">
+      <h2>Generate Content</h2>
+      <button onclick="generateSocialPost()">Generate Social Post (X)</button>
+      <button onclick="generateSermon()">Generate New Sermon</button>
+      <button onclick="generateDecree()">Generate Decree</button>
+    </div>
+
+    <!-- Output Display -->
+    <div id="output"></div>
+  </div>
+
+  <script>
+    // Configure AWS SDK
+   // AWS.config.update({
+//   region: 'us-east-2',
+//   credentials: new AWS.Credentials('your-access-key-id', 'your-secret-access-key'),
+// });,
+    });
+
+    const s3 = new AWS.S3();
+    const transcribe = new AWS.TranscribeService();
+    const bucketName = 'walk-with-victory-sermons';
+
+    function uploadSermon() {
+      const file = document.getElementById('sermonFile').files[0];
+      const topic = document.getElementById('sermonTopic').value;
+      const output = document.getElementById('output');
+
+      if (!file) {
+        output.innerHTML = '<p style="color: red;">Please select a file!</p>';
+        return;
+      }
+
+      const params = {
+        Bucket: bucketName,
+        Key: file.name,
+        Body: file,
+        ContentType: file.type,
+      };
+
+      s3.upload(params, (err, data) => {
+        if (err) {
+          output.innerHTML = `<p>Error: ${err.message}</p>`;
+        } else {
+          output.innerHTML = `<p>Uploaded to ${data.Location}</p>`;
+          if (file.type.startsWith('audio') || file.type.startsWith('video')) {
+            startTranscription(file);
+          }
+        }
+      });
+    }
+
+    function startTranscription(file) {
+      const params = {
+        TranscriptionJobName: `job-${Date.now()}`,
+        LanguageCode: 'en-US',
+        Media: {
+          MediaFileUri: `s3://${bucketName}/${file.name}`,
+        },
+        OutputBucketName: bucketName,
+      };
+
+      transcribe.startTranscriptionJob(params, (err, data) => {
+        if (err) {
+          output.innerHTML += `<p>Transcription Error: ${err.message}</p>`;
+        } else {
+          output.innerHTML += `<p>Transcription started! Check S3 later for results.</p>`;
+        }
+      });
+    }
+
+    function generateSocialPost() {
+      const output = document.getElementById('output');
+      const keywords = ['faith', 'hope', 'love'];
+      const post = `Join us this Sunday as we explore ${keywords.join(', ')}! #Sermon`;
+      output.innerHTML = `<p>Generated X post: "${post}"</p>`;
+    }
+
+    function generateSermon() {
+      const output = document.getElementById('output');
+      const topic = document.getElementById('sermonTopic').value || 'God’s Grace';
+      output.innerHTML = `<p>Generated Sermon: "Today, we reflect on ${topic} and its power in our lives..."</p>`;
+    }
+
+    function generateDecree() {
+      const output = document.getElementById('output');
+      const topic = document.getElementById('sermonTopic').value || 'peace';
+      output.innerHTML = `<p>Generated Decree: "I decree ${topic} over this congregation in Jesus’ name."</p>`;
+    }
+  </script>
+</body>
+</html>
