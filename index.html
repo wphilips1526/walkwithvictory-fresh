@@ -4,14 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pastor’s Sermon App</title>
-  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aws-amplify@5.0.0/dist/aws-amplify.min.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      -webkit-user-select: none; 
+      user-select: none; 
+      -webkit-text-size-adjust: 100%; 
+      text-size-adjust: 100%; 
+    }
     .container { max-width: 800px; margin: auto; }
     .upload-section, .content-section { margin-bottom: 20px; }
     button { padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer; }
     button:hover { background-color: #0056b3; }
     #output { margin-top: 20px; }
+    label { display: block; margin-bottom: 5px; }
+    input[type="file"], input[type="text"] { margin-bottom: 10px; width: 100%; max-width: 400px; }
   </style>
 </head>
 <body>
@@ -21,17 +30,19 @@
     <!-- Sermon Upload Section -->
     <div class="upload-section">
       <h2>Upload Sermon</h2>
+      <label for="sermonFile">Select Sermon File:</label>
       <input type="file" id="sermonFile" accept=".txt,.mp3,.mp4">
-      <input type="text" id="sermonTopic" placeholder="Enter sermon topic (optional)">
-      <button onclick="uploadSermon()">Upload</button>
+      <label for="sermonTopic">Sermon Topic (Optional):</label>
+      <input type="text" id="sermonTopic" placeholder="Enter sermon topic">
+      <button onclick="uploadSermon()" aria-label="Upload Sermon File">Upload</button>
     </div>
 
     <!-- Content Generation Section -->
     <div class="content-section">
       <h2>Generate Content</h2>
-      <button onclick="generateSocialPost()">Generate Social Post (X)</button>
-      <button onclick="generateSermon()">Generate New Sermon</button>
-      <button onclick="generateDecree()">Generate Decree</button>
+      <button onclick="generateSocialPost()" aria-label="Generate Social Media Post for X">Generate Social Post (X)</button>
+      <button onclick="generateSermon()" aria-label="Generate New Sermon">Generate New Sermon</button>
+      <button onclick="generateDecree()" aria-label="Generate Decree">Generate Decree</button>
     </div>
 
     <!-- Output Display -->
@@ -39,84 +50,82 @@
   </div>
 
   <script>
-    <script>
-  // Configure Amplify with Cognito
-  Amplify.configure({
-    Auth: {
-      region: 'us-east-2',
-      identityPoolId: 'us-west-2_yja2TUBSS', 
-      userPoolId: 'us-west-2_yja2TUBSS', 
-      userPoolWebClientId: 'wjq5rx', 
-    },
-    Storage: {
-      AWSS3: {
-        bucket: 'walk-with-victory-sermons',
+    // Configure Amplify with Cognito
+    Amplify.configure({
+      Auth: {
         region: 'us-east-2',
+        identityPoolId: 'us-east-2:xyz123', // Replace with your Identity Pool ID
+        userPoolId: 'us-east-2_abc123', // Replace with your User Pool ID
+        userPoolWebClientId: 'xyz456', // Replace with your App Client ID
       },
-    },
-  });
+      Storage: {
+        AWSS3: {
+          bucket: 'walk-with-victory-sermons',
+          region: 'us-east-2',
+        },
+      },
+    });
 
-  // Basic sign-in function (for testing)
-  async function signIn() {
-    try {
-      const user = await Amplify.Auth.signIn('testuser@example.com', 'Password123!');
-      console.log('Signed in:', user);
-    } catch (error) {
-      console.error('Sign-in error:', error);
-    }
-  }
-
-  function uploadSermon() {
-    const file = document.getElementById('sermonFile').files[0];
-    const topic = document.getElementById('sermonTopic').value;
-    const output = document.getElementById('output');
-
-    if (!file) {
-      output.innerHTML = '<p style="color: red;">Please select a file!</p>';
-      return;
+    // Basic sign-in function (for testing)
+    async function signIn() {
+      try {
+        const user = await Amplify.Auth.signIn('testuser@example.com', 'Password123!');
+        console.log('Signed in:', user);
+      } catch (error) {
+        console.error('Sign-in error:', error);
+      }
     }
 
-    Amplify.Storage.put(file.name, file, {
-      contentType: file.type,
-    })
-      .then(result => {
-        output.innerHTML = `<p>Uploaded ${file.name} to S3</p>`;
-        if (file.type.startsWith('audio') || file.type.startsWith('video')) {
-          startTranscription(file);
-        }
+    function uploadSermon() {
+      const file = document.getElementById('sermonFile').files[0];
+      const topic = document.getElementById('sermonTopic').value;
+      const output = document.getElementById('output');
+
+      if (!file) {
+        output.innerHTML = '<p style="color: red;">Please select a file!</p>';
+        return;
+      }
+
+      Amplify.Storage.put(file.name, file, {
+        contentType: file.type,
       })
-      .catch(err => {
-        output.innerHTML = `<p>Error: ${err}</p>`;
-      });
-  }
+        .then(result => {
+          output.innerHTML = `<p>Uploaded ${file.name} to S3</p>`;
+          if (file.type.startsWith('audio') || file.type.startsWith('video')) {
+            startTranscription(file);
+          }
+        })
+        .catch(err => {
+          output.innerHTML = `<p>Error: ${err}</p>`;
+        });
+    }
 
-  function startTranscription(file) {
-    const output = document.getElementById('output');
-    output.innerHTML += `<p>Transcription will be handled via backend (to be implemented).</p>`;
-  }
+    function startTranscription(file) {
+      const output = document.getElementById('output');
+      output.innerHTML += `<p>Transcription will be handled via backend (to be implemented).</p>`;
+    }
 
-  function generateSocialPost() {
-    const output = document.getElementById('output');
-    const keywords = ['faith', 'hope', 'love'];
-    const post = `Join us this Sunday as we explore ${keywords.join(', ')}! #Sermon`;
-    output.innerHTML = `<p>Generated X post: "${post}"</p>`;
-  }
+    function generateSocialPost() {
+      const output = document.getElementById('output');
+      const keywords = ['faith', 'hope', 'love'];
+      const post = `Join us this Sunday as we explore ${keywords.join(', ')}! #Sermon`;
+      output.innerHTML = `<p>Generated X post: "${post}"</p>`;
+    }
 
-  function generateSermon() {
-    const output = document.getElementById('output');
-    const topic = document.getElementById('sermonTopic').value || 'God’s Grace';
-    output.innerHTML = `<p>Generated Sermon: "Today, we reflect on ${topic} and its power in our lives..."</p>`;
-  }
+    function generateSermon() {
+      const output = document.getElementById('output');
+      const topic = document.getElementById('sermonTopic').value || 'God’s Grace';
+      output.innerHTML = `<p>Generated Sermon: "Today, we reflect on ${topic} and its power in our lives..."</p>`;
+    }
 
-  function generateDecree() {
-    const output = document.getElementById('output');
-    const topic = document.getElementById('sermonTopic').value || 'peace';
-    output.innerHTML = `<p>Generated Decree: "I decree ${topic} over this congregation in Jesus’ name."</p>`;
-  }
+    function generateDecree() {
+      const output = document.getElementById('output');
+      const topic = document.getElementById('sermonTopic').value || 'peace';
+      output.innerHTML = `<p>Generated Decree: "I decree ${topic} over this congregation in Jesus’ name."</p>`;
+    }
 
-  // For testing, call signIn on page load (remove this in production)
-  signIn();
-</script>
+    // For testing, call signIn on page load (remove this in production)
+    signIn();
   </script>
 </body>
 </html>
