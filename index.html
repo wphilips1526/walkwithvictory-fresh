@@ -39,83 +39,84 @@
   </div>
 
   <script>
-    // Configure AWS SDK
-   // AWS.config.update({
-//   region: 'us-east-2',
-//   credentials: new AWS.Credentials('your-access-key-id', 'your-secret-access-key'),
-// });,
-    });
+    <script>
+  // Configure Amplify with Cognito
+  Amplify.configure({
+    Auth: {
+      region: 'us-east-2',
+      identityPoolId: 'us-west-2_yja2TUBSS', 
+      userPoolId: 'us-west-2_yja2TUBSS', 
+      userPoolWebClientId: 'wjq5rx', 
+    },
+    Storage: {
+      AWSS3: {
+        bucket: 'walk-with-victory-sermons',
+        region: 'us-east-2',
+      },
+    },
+  });
 
-    const s3 = new AWS.S3();
-    const transcribe = new AWS.TranscribeService();
-    const bucketName = 'walk-with-victory-sermons';
+  // Basic sign-in function (for testing)
+  async function signIn() {
+    try {
+      const user = await Amplify.Auth.signIn('testuser@example.com', 'Password123!');
+      console.log('Signed in:', user);
+    } catch (error) {
+      console.error('Sign-in error:', error);
+    }
+  }
 
-    function uploadSermon() {
-      const file = document.getElementById('sermonFile').files[0];
-      const topic = document.getElementById('sermonTopic').value;
-      const output = document.getElementById('output');
+  function uploadSermon() {
+    const file = document.getElementById('sermonFile').files[0];
+    const topic = document.getElementById('sermonTopic').value;
+    const output = document.getElementById('output');
 
-      if (!file) {
-        output.innerHTML = '<p style="color: red;">Please select a file!</p>';
-        return;
-      }
+    if (!file) {
+      output.innerHTML = '<p style="color: red;">Please select a file!</p>';
+      return;
+    }
 
-      const params = {
-        Bucket: bucketName,
-        Key: file.name,
-        Body: file,
-        ContentType: file.type,
-      };
-
-      s3.upload(params, (err, data) => {
-        if (err) {
-          output.innerHTML = `<p>Error: ${err.message}</p>`;
-        } else {
-          output.innerHTML = `<p>Uploaded to ${data.Location}</p>`;
-          if (file.type.startsWith('audio') || file.type.startsWith('video')) {
-            startTranscription(file);
-          }
+    Amplify.Storage.put(file.name, file, {
+      contentType: file.type,
+    })
+      .then(result => {
+        output.innerHTML = `<p>Uploaded ${file.name} to S3</p>`;
+        if (file.type.startsWith('audio') || file.type.startsWith('video')) {
+          startTranscription(file);
         }
+      })
+      .catch(err => {
+        output.innerHTML = `<p>Error: ${err}</p>`;
       });
-    }
+  }
 
-    function startTranscription(file) {
-      const params = {
-        TranscriptionJobName: `job-${Date.now()}`,
-        LanguageCode: 'en-US',
-        Media: {
-          MediaFileUri: `s3://${bucketName}/${file.name}`,
-        },
-        OutputBucketName: bucketName,
-      };
+  function startTranscription(file) {
+    const output = document.getElementById('output');
+    output.innerHTML += `<p>Transcription will be handled via backend (to be implemented).</p>`;
+  }
 
-      transcribe.startTranscriptionJob(params, (err, data) => {
-        if (err) {
-          output.innerHTML += `<p>Transcription Error: ${err.message}</p>`;
-        } else {
-          output.innerHTML += `<p>Transcription started! Check S3 later for results.</p>`;
-        }
-      });
-    }
+  function generateSocialPost() {
+    const output = document.getElementById('output');
+    const keywords = ['faith', 'hope', 'love'];
+    const post = `Join us this Sunday as we explore ${keywords.join(', ')}! #Sermon`;
+    output.innerHTML = `<p>Generated X post: "${post}"</p>`;
+  }
 
-    function generateSocialPost() {
-      const output = document.getElementById('output');
-      const keywords = ['faith', 'hope', 'love'];
-      const post = `Join us this Sunday as we explore ${keywords.join(', ')}! #Sermon`;
-      output.innerHTML = `<p>Generated X post: "${post}"</p>`;
-    }
+  function generateSermon() {
+    const output = document.getElementById('output');
+    const topic = document.getElementById('sermonTopic').value || 'God’s Grace';
+    output.innerHTML = `<p>Generated Sermon: "Today, we reflect on ${topic} and its power in our lives..."</p>`;
+  }
 
-    function generateSermon() {
-      const output = document.getElementById('output');
-      const topic = document.getElementById('sermonTopic').value || 'God’s Grace';
-      output.innerHTML = `<p>Generated Sermon: "Today, we reflect on ${topic} and its power in our lives..."</p>`;
-    }
+  function generateDecree() {
+    const output = document.getElementById('output');
+    const topic = document.getElementById('sermonTopic').value || 'peace';
+    output.innerHTML = `<p>Generated Decree: "I decree ${topic} over this congregation in Jesus’ name."</p>`;
+  }
 
-    function generateDecree() {
-      const output = document.getElementById('output');
-      const topic = document.getElementById('sermonTopic').value || 'peace';
-      output.innerHTML = `<p>Generated Decree: "I decree ${topic} over this congregation in Jesus’ name."</p>`;
-    }
+  // For testing, call signIn on page load (remove this in production)
+  signIn();
+</script>
   </script>
 </body>
 </html>
